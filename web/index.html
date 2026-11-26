@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#FF7A59" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <title>Office Virtual Agent AI — YouTube Kids (3–5 Tahun)</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-logo">🏡</span>
+      <div>
+        <h1>Kids AI Office</h1>
+        <p class="subtitle">Edukasi & Motorik Anak 3–5 Tahun</p>
+      </div>
+    </div>
+    <button id="btnRefresh" class="icon-btn" title="Refresh status">🔄</button>
+  </header>
+
+  <main class="container">
+    <!-- Live Status Banner -->
+    <section id="liveBanner" class="live-banner idle">
+      <div class="live-dot"></div>
+      <div class="live-text">
+        <strong id="officeStatusTitle">Kantor Siap Beroperasi</strong>
+        <span id="officeStatusSub">Memuat status dari GitHub...</span>
+      </div>
+    </section>
+
+    <!-- TAB 1: KANTOR VIRTUAL -->
+    <section id="tab-office" class="tab-panel active">
+      <div class="stats-row">
+        <div class="stat-card">
+          <span class="stat-num" id="statScripts">0</span>
+          <span class="stat-label">Script Dibuat</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-num" id="statPending">0</span>
+          <span class="stat-label">Menunggu Approval</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-num" id="statPublished">0</span>
+          <span class="stat-label">Video Terbit</span>
+        </div>
+      </div>
+
+      <!-- Virtual Office Floor -->
+      <div class="office-floor">
+        <div class="floor-header">
+          <h2>🏢 Lantai Studio Virtual Agent</h2>
+          <span class="badge-live" id="lastUpdated">Live</span>
+        </div>
+        <div id="agentsGrid" class="agents-grid"></div>
+      </div>
+
+      <!-- Quick Trigger Form -->
+      <div class="card create-card">
+        <h2>✨ Tugaskan Agent Buat Video Baru</h2>
+        <div class="form-group">
+          <label for="inputTheme">Tema Edukasi & Motorik</label>
+          <select id="inputTheme">
+            <option value="random">🎲 Acak (Rekomendasi Harian)</option>
+            <option value="motorik_hewan">🐸 Meniru Gerak Hewan Lucu</option>
+            <option value="warna_dan_gerak">🌈 Mengenal Warna Sambil Bergerak</option>
+            <option value="angka_dan_jari">🖐️ Berhitung 1–5 dengan Jari</option>
+            <option value="bentuk_di_udara">⭐ Gambar Bentuk di Udara</option>
+            <option value="kebiasaan_baik">🪥 Kebiasaan Baik Anak Hebat</option>
+            <option value="alam_dan_cuaca">🌦️ Mengenal Alam & Cuaca</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="inputTopic">Topik Khusus (Opsional)</label>
+          <input id="inputTopic" type="text" placeholder="Misal: Lompat seperti kelinci mencari wortel" />
+        </div>
+        <div class="form-group">
+          <label for="inputPrivacy">Target Privasi Upload</label>
+          <select id="inputPrivacy">
+            <option value="private">🔒 Private (Aman dicek dulu di YouTube Studio)</option>
+            <option value="unlisted">🔗 Unlisted</option>
+            <option value="public">🌍 Public (Butuh OAuth App Verified)</option>
+          </select>
+        </div>
+        <button id="btnGenerateScript" class="btn-primary full-width">
+          🚀 Jalankan Pena (Scriptwriter) Sekarang
+        </button>
+      </div>
+    </section>
+
+    <!-- TAB 2: APPROVAL QUEUE -->
+    <section id="tab-approval" class="tab-panel">
+      <div class="section-head">
+        <h2>📝 Antrean Approval Script</h2>
+        <p>Periksa, edit jika perlu, lalu setujui agar langsung diproduksi & diupload ke YouTube.</p>
+      </div>
+      <div id="approvalList" class="stack-list"></div>
+    </section>
+
+    <!-- TAB 3: VIDEO TERBIT -->
+    <section id="tab-videos" class="tab-panel">
+      <div class="section-head">
+        <h2>📺 Riwayat Produksi & YouTube</h2>
+        <p>Daftar video YouTube Kids Shorts yang telah selesai diproduksi.</p>
+      </div>
+      <div id="videosList" class="stack-list"></div>
+    </section>
+
+    <!-- TAB 4: SETTING (HP & GITHUB) -->
+    <section id="tab-settings" class="tab-panel">
+      <div class="card">
+        <h2>⚙️ Koneksi GitHub (Tersimpan di HP Anda)</h2>
+        <p class="hint">
+          Token hanya disimpan di <code>localStorage</code> browser HP Anda agar bisa menjalankan workflow & menekan tombol Approve dari mana saja.
+        </p>
+        <div class="form-group">
+          <label for="cfgRepo">Repository GitHub (<code>owner/nama-repo</code>)</label>
+          <input id="cfgRepo" type="text" placeholder="contoh: username/kids-ai-office" />
+        </div>
+        <div class="form-group">
+          <label for="cfgToken">GitHub Fine-grained PAT (Actions + Issues: Read & Write)</label>
+          <input id="cfgToken" type="password" placeholder="github_pat_..." />
+        </div>
+        <button id="btnSaveSettings" class="btn-primary full-width">💾 Simpan Pengaturan</button>
+      </div>
+
+      <div class="card">
+        <h2>📱 Pasang sebagai Aplikasi di HP (PWA)</h2>
+        <ul class="tips-list">
+          <li><strong>Android (Chrome):</strong> Ketuk ikon menu <code>⋮</code> di kanan atas -> pilih <strong>Add to Home screen / Instal aplikasi</strong>.</li>
+          <li><strong>iPhone (Safari):</strong> Ketuk ikon <strong>Share</strong> -> pilih <strong>Add to Home Screen</strong>.</li>
+          <li>Dengan cara ini Anda bisa buka kantor AI kapan saja cukup 1 tap dari layar utama HP.</li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <!-- Toast notification -->
+  <div id="toast" class="toast hidden"></div>
+
+  <!-- Bottom Navigation for Mobile -->
+  <nav class="bottom-nav">
+    <button class="nav-btn active" data-tab="office">
+      <span>🏢</span>
+      <small>Kantor</small>
+    </button>
+    <button class="nav-btn" data-tab="approval">
+      <span>📝</span>
+      <small>Approval</small>
+      <em id="navBadge" class="nav-badge hidden">0</em>
+    </button>
+    <button class="nav-btn" data-tab="videos">
+      <span>📺</span>
+      <small>Video</small>
+    </button>
+    <button class="nav-btn" data-tab="settings">
+      <span>⚙️</span>
+      <small>Setting</small>
+    </button>
+  </nav>
+
+  <script src="app.js"></script>
+</body>
+</html>

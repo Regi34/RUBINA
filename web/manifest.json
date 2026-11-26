@@ -1,0 +1,18 @@
+{
+  "name": "Office Virtual Agent AI - YouTube Kids",
+  "short_name": "Kids AI Office",
+  "description": "Kantor Virtual Agent AI untuk membuat & upload video edukasi motorik anak 3-5 tahun ke YouTube Shorts.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#FFF9EE",
+  "theme_color": "#FF7A59",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

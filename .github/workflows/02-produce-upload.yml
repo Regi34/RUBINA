@@ -1,0 +1,79 @@
+name: 02 - Produce Video & Upload YouTube
+
+on:
+  issues:
+    types: [labeled]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: "Nomor GitHub Issue yang berisi script approved"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: video-production
+  cancel-in-progress: false
+
+jobs:
+  produce-and-upload:
+    if: github.event_name != 'issues' || github.event.label.name == 'approved'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install FFmpeg & Fonts
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg fonts-dejavu-core
+          mkdir -p assets/fonts
+          if [ ! -f assets/fonts/Fredoka-Bold.ttf ]; then
+            curl -fsSL "https://github.com/google/fonts/raw/main/ofl/fredoka/Fredoka%5Bwdth%2Cwght%5D.ttf" -o assets/fonts/Fredoka-Bold.ttf || true
+          fi
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Produce Short Video & Upload to YouTube
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ github.event.inputs.issue_number || github.event.issue.number }}
+          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
+          YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
+          YT_REFRESH_TOKEN: ${{ secrets.YT_REFRESH_TOKEN }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python -m agents.pipeline_produce
+
+      - name: Upload MP4 Artifact Backup
+        if: always() && hashFiles('output/final_short.mp4') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: kids-short-${{ github.event.inputs.issue_number || github.event.issue.number }}
+          path: output/final_short.mp4
+          retention-days: 30
+
+      - name: Commit updated office state
+        if: always()
+        run: |
+          git config user.name "virtual-office-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add state/office_state.json
+          if ! git diff --staged --quiet; then
+            git pull --rebase
+            git commit -m "chore: update office state after production"
+            git push
+          fi

@@ -1,0 +1,29 @@
+# Environment & Secrets
+.env
+client_secret.json
+token.json
+
+# Generated runtime artifacts
+output/
+tmp/
+*.mp4
+*.mp3
+*.wav
+*.ass
+*.srt
+*.png
+*.jpg
+
+# Keep placeholder asset docs & overlays
+!assets/overlays/*.png
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Nested empty folder
+SONIC-FLOWER-GROOVE/
+

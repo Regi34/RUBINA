@@ -1,0 +1,48 @@
+{
+  "updated_at": "2026-11-26T00:00:00Z",
+  "active_episode": null,
+  "office_status": "idle",
+  "agents": {
+    "scriptwriter": {
+      "name": "Pena (Scriptwriter)",
+      "role": "Ide & Naskah Kids",
+      "status": "idle",
+      "message": "Siap menulis cerita seru untuk anak-anak!"
+    },
+    "safety_guard": {
+      "name": "Tameng (Safety Guard)",
+      "role": "Filter COPPA & Ramah Anak",
+      "status": "idle",
+      "message": "Memastikan semua naskah aman & edukatif."
+    },
+    "voice_actor": {
+      "name": "Nada (Voice Actor)",
+      "role": "Dubbing & Subtitle",
+      "status": "idle",
+      "message": "Mikrofon siap untuk suara ceria!"
+    },
+    "illustrator": {
+      "name": "Kuwas (Illustrator)",
+      "role": "Ilustrasi Kartun 9:16",
+      "status": "idle",
+      "message": "Palet warna cerah sudah siap."
+    },
+    "video_editor": {
+      "name": "Klip (Video Editor)",
+      "role": "Animasi & Rendering FFmpeg",
+      "status": "idle",
+      "message": "Timeline siap merakit video Shorts."
+    },
+    "publisher": {
+      "name": "Siar (YouTube Publisher)",
+      "role": "Upload & Metadata YouTube",
+      "status": "idle",
+      "message": "Menunggu video final untuk diupload."
+    }
+  },
+  "stats": {
+    "total_scripts": 0,
+    "total_published": 0
+  },
+  "recent_videos": []
+}
