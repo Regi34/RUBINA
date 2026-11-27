@@ -3,12 +3,20 @@
 import json
 import os
 import re
+import time
 from typing import Literal
 
-import requests
 from pydantic import BaseModel, Field
 
 from agents.config import DEFAULT_THEME, THEMES, VISUAL_STYLE_LOCK
+
+# Chain model Gemini: coba dari yang terbaru, fallback ke yang lebih lama jika 503/404
+GEMINI_MODEL_CHAIN = [
+    "gemini-2.0-flash",
+    "gemini-1.5-flash",
+    "gemini-2.0-flash-lite",
+    "gemini-1.5-flash-8b",
+]
 
 
 class SceneItem(BaseModel):
@@ -106,39 +114,45 @@ def _call_gemini(prompt: str) -> str:
 
     api_key = os.environ["GEMINI_API_KEY"]
     client = genai.Client(api_key=api_key)
-    response = client.models.generate_content(
-        model=os.getenv("GEMINI_MODEL", "gemini-3.8-flash"),
-        contents=prompt,
-        config=types.GenerateContentConfig(
-            response_mime_type="application/json",
-            temperature=0.8,
-        ),
-    )
-    if not response.text:
-        raise RuntimeError("Gemini mengembalikan respons kosong.")
-    return response.text
 
+    # Ambil model dari env, atau coba chain fallback otomatis
+    override_model = os.getenv("GEMINI_MODEL", "").strip()
+    models_to_try = [override_model] if override_model else GEMINI_MODEL_CHAIN
 
-def _call_github_models(prompt: str) -> str:
-    token = os.environ["GITHUB_TOKEN"]
-    resp = requests.post(
-        "https://models.inference.ai.azure.com/chat/completions",
-        headers={
-            "Authorization": f"Bearer {token}",
-            "Content-Type": "application/json",
-        },
-        json={
-            "model": "gpt-4o-mini",
-            "messages": [
-                {"role": "system", "content": "You output strict valid JSON only."},
-                {"role": "user", "content": prompt},
-            ],
-            "temperature": 0.8,
-        },
-        timeout=60,
-    )
-    resp.raise_for_status()
-    return resp.json()["choices"][0]["message"]["content"]
+    last_exc: Exception | None = None
+    for model in models_to_try:
+        for attempt in range(3):  # 3x retry per model untuk 503
+            try:
+                response = client.models.generate_content(
+                    model=model,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        response_mime_type="application/json",
+                        temperature=0.8,
+                    ),
+                )
+                if not response.text:
+                    raise RuntimeError("Gemini mengembalikan respons kosong.")
+                print(f"[Scriptwriter] Berhasil dengan model: {model} (attempt {attempt + 1})")
+                return response.text
+            except Exception as exc:
+                last_exc = exc
+                err_str = str(exc)
+                # Jika 503 (overload) → tunggu lalu retry
+                if "503" in err_str or "UNAVAILABLE" in err_str:
+                    wait = 8 * (attempt + 1)
+                    print(f"[Scriptwriter] {model} overload (503), tunggu {wait}s lalu retry...")
+                    time.sleep(wait)
+                    continue
+                # Jika 404 (model tidak tersedia) → langsung coba model berikutnya
+                elif "404" in err_str or "NOT_FOUND" in err_str:
+                    print(f"[Scriptwriter] {model} tidak tersedia (404), coba model berikutnya...")
+                    break
+                # Error lain → langsung raise
+                else:
+                    raise
+
+    raise RuntimeError(f"Semua model Gemini gagal. Error terakhir: {last_exc}")
 
 
 def generate_script(
@@ -165,15 +179,9 @@ def generate_script(
         except Exception as exc:
             errors.append(f"Gemini error: {exc}")
 
-    if raw is None and os.getenv("GITHUB_TOKEN"):
-        try:
-            raw = _call_github_models(prompt)
-        except Exception as exc:
-            errors.append(f"GitHub Models error: {exc}")
-
     if raw is None:
         raise RuntimeError(
-            "Tidak ada LLM yang berhasil dipanggil. Pastikan GEMINI_API_KEY atau GITHUB_TOKEN tersedia. "
+            "Gemini API gagal dipanggil. Periksa GEMINI_API_KEY di GitHub Secrets dan coba lagi. "
             + " | ".join(errors)
         )
 
